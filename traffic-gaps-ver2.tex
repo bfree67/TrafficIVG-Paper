@@ -1,0 +1,692 @@
+\documentclass[preprint,12pt,a4paper,authoryear]{elsarticle}
+%\usepackage[dvipdfm]{graphicx} 
+\makeatletter
+\def\ps@pprintTitle{%
+ \let\@oddhead\@empty
+ \let\@evenhead\@empty
+ \def\@oddfoot{}%
+ \let\@evenfoot\@oddfoot}
+\makeatother
+
+\usepackage{graphicx}
+%% The amssymb package provides various useful mathematical symbols
+\usepackage{lineno}
+%% The lineno packages adds line numbers. Start line numbering with
+%% \begin{linenumbers}, end it with \end{linenumbers}. Or switch it on
+%% for the whole article with \linenumbers after \end{frontmatter}.
+
+\usepackage{float}
+\usepackage{amsmath}
+
+%for tables using merged columns
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{url}
+
+%\journal{Transportation Journal}
+
+\title{Using Unmanned Aerial Systems to Estimate Vehicle Stacking at Signalled Intersections}
+
+\begin{document}
+
+\maketitle
+
+\begin{linenumbers}
+\begin{frontmatter}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\author[add1]{Brian S. Freeman \corref{cor1}}
+
+\author[add2]{Jamal Ahmad Al Matawah}
+
+\author[add3]{Musaed Al Najat}
+
+\author[add1]{Bahram Gharabaghi}
+
+\author[add1,add4]{Jesse Th\'e }
+
+\cortext[cor1]{Corresponding author (bfreem02@uoguelph.ca)}
+
+\address[add1]{School of Engineering, University of Guelph, Guelph, Ontario, N1G 2W1, Canada}
+\address[add2]{Public Authority for Applied Education and Training, Shuwaikh, Kuwait}
+\address[add3]{Kuwait Traffic Safety Society, Shuwaikh, Kuwait}
+\address[add4]{Lakes Environmental, 170 Columbia St W, Waterloo, Ontario, N2L 3L3 Canada}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{abstract}
+%% Text of abstract
+Fleet composition and vehicle spacing on roads are important inputs to mobile source emission models and traffic planning. In this paper, we use an unmanned aerial system (UAS) to capture imagery of stationary vehicle formations at two different intersections and times of day. The imagery is processed using photogrammetric software to generate 3 dimensional models of the formations that allow measurement of the stacking gaps and identification of individual vehicle types for fleet composition evaluation. Statistical tests were performed on the different flight results to determine if the traffic behavior (both composition and gaps) were similar and can be pooled. In both cases, the variation of fleet composition and gaps were similar, however, the stationary headway gaps followed a logarithmic distribution and had to be transformed prior to pooling. The final results of the fleet composition measured varied significantly from the estimated mix based on registered vehicles, while the average vehicle spacing was approximately 2.2 m. These results were used to prepare a Monte Carlo Analysis model to estimate the total number and types of vehicles on a 1 km road section. The model was extended from stationary traffic to traffic moving up to 20 km/h by assuming a linear increase of the spacing gap.\\
+
+\textbf{Highlights:}
+\begin{itemize}
+  \item A UAS was used to capture imagery of traffic formations at two different intersections.
+  \item Fleet composition and stationary headway gaps turned out to be similar at both locations.
+  \item Results used to prepare a Monte Carlo Analysis model to estimate vehicle numbers and types based on speed.
+ 
+\end{itemize}
+
+\end{abstract}
+
+\begin{keyword}
+UAS \sep traffic jam \sep signalled intersection \sep fleet composition \sep headway \sep photogrammetry \sep Monte Carlo Analysis
+\end{keyword}
+
+\end{frontmatter}
+ 
+\section{Introduction}
+
+Vehicle emissions are a significant contributor to regional air quality but one of the hardest sources to estimate due to the large number of variables associated with the calculations. While several emission inventory models exist for mobile sources, the input parameters are often  difficult to get and default values are based on inapplicable locations or out of date fleets. Traffic studies require large groups of observers to count and classify vehicles at different locations and at different times of day or expensive intelligent traffic systems (ITSs) installed to monitor and quantify traffic statistics that can be used in models \citep{Suzuki2015}. Being able to estimate the number and type of vehicles on the road is an essential step to quantifying the overall emissions for a region. 
+
+Signalled intersections (SIs) are important elements within road networks that provide traffic control and management. A major drawback of SIs are that they stop the continuous flow of traffic, requiring deceleration, idling and acceleration of vehicles. This cycle of activity creates complex emissions ranging from particulate matter (PM) from brake and tire wear and hydrocarbons (HC) from incomplete combustion. Vehicle emissions generated at SIs include many more variables due to the variety of different vehicle models, their ages, maintenance histories, and how they are operated. A major influence on the amount of  vehicle emissions generated is driver behavior. Aggressive driving habits, not only lead to accidents that intensify congestion, but also uses more fuel for rapid accelerations and braking actions. Individual driver attitudes also contribute to stacking concentrations at SIs based on how comfortable a driver feels in approaching the vehicle in front of them. Studies have shown that stacking distances do not improve traffic flow once the signal changes to green  \citep{Ahmadi2017}. A safe distance is recommended instead, to avoid rear-end collisions.
+
+Like stationary sources, vehicle emission estimates are based on emission factors developed by researchers to characterize common vehicles under specific operating conditions. Most emissions factors studies used chassis dynamometers to measure direct emissions from engine exhaust but fail to capture non-exhaust emissions such as particulate matter from brake and tire wear, vapor losses from the fuel storage systems, leaks from lubricants and refrigerants, hydrocarbons entrained in dust from road surfaces, and aggressive driving \citep{Kam2012, Franco2013, Freeman2015a}. While estimating emissions for individual vehicles is not practical, aggregated emissions over time can calculated by mobile source emission models and used for regional emissions inventories and transportation planning. For emissions at SIs, vehicle emissions can be estimated based on idling vehicles and acceleration from stationary to posted limits, as shown below
+
+\begin{equation}
+\label{eq:siemissions}
+E_{SI}=\sum_{i=1}^{n}(Q_{0})_{i}t_{0} + (Q_{a})_{i}t_{a}
+\end{equation}
+
+\noindent
+where $n$ is the number of vehicles in the SI queue, $Q_{0}$ is the idling emission rate for each individual vehicle in the queue, $t_{0}$,  $Q_{a}$ is the individual emission rate to accelerate up to the posted limited, and $t_{0}$   and $t_{a}$ are the queuing time and acceleration time respectively.
+
+\subsubsection{Vehicle emission models} \label{sssec:VehEmissionModels}
+
+One of the most widely used model in North America is the MOtor Vehicle Emission Simulator (MOVES) from the USEPA \citep{MOVES2014a}. This model uses vehicle type, road conditions, operating activities, and geography to estimate the amount of pollutants generated in a section of road. MOVES is primarily intended for mobile sources in North America. It is a very complex and data intensive model that is difficult to apply to large, regional models \citep{Zhang2011}.
+
+Another common model is the International Vehicle Emissions (IVE) model developed by a consortia funded by the USEPA to provide a model for vehicle emissions outside of North America \citep{IVE2008}. It includes over 700 different types of vehicles, including 72 different classes of light duty gasoline vehicles (LGDTs) with 3 different cylinder volume subsectors. Vehicle models are further categorized by technology classes based on vehicle exhaust controls and European standards \citep{Davis2005}. The IVE model allows for customized local traffic conditions, driving patterns, fuel quality, and vehicle types for countries outside North America \citep{Davis2010}. Results from the IVE however vary with underestimation of some emissions by 50\% and over-estimation of others by 350\% \citep{Hui2007}.
+
+\subsubsection{Classical traffic estimation} \label{sssec:ClassicalTraffic}
+
+Quantifying vehicle emissions requires, as a minimum, estimations of the number of vehicles on the road networks and the type of vehicle. In addition to these input parameters, each model uses a combination of composite mobile emissions based on average speeds, hot/cold starts, ambient temperature, prediction year and modal factors to calculate emissions\citep{Franco2013}. While the models assume constant speeds, actual driving conditions are more variable, especially in congested traffic \citep{Freeman2015b}. Vehicle emissions vary with speed with more emissions generated at higher speeds. Congestion and traffic jams, however, are the fastest growing segment of mobile source emissions, with emission rates of pollutants at slow and stop/go speeds similar to emissions at high speeds due to continuous acceleration/deceleration cycles \citep{Barth2009}. At SIs, vehicles are assumed to be stationary, although small creeping typically occurs.
+
+\subsubsection{Modern traffic estimation}
+
+In many major urban centers, main roads are monitored by intelligent transportation systems (ITSs) that track average velocity, $v$, traffic flow, $f$, and traffic density, $\rho$ \citep{Wu2007, Abtahi2011, Bartosz2015}.
+
+Without using expensive ITS's, different numerical models have been used to estimate vehicle density including classical statistical models \citep{Schreckenberg1995}, Kalman Filters \citep{Pourmoallem1997, Sun2004} and neural networks \citep{Ghosh-Dastidar2006}.  These models looked at how traffic flowed over time to assess traffic management strategies and required complex computations and historical data to calibrate the necessary equations for a specific stretch of road.  Monte Carlo methods have also been used to validate results of traffic flow models \citep{Mihaylova2004} but not to generate results.  These models look at traffic flow under various conditions and not at the extreme condition of congested traffic or SIs. 
+
+\subsubsection{Unmanned Aerial Systems for traffic management} 
+Unmanned aerial systems (UASs) or drones, have become widely used for non-military applications such as cartography \citep{Saadatseresht2015}, agricultural surveillance \citep{Saari2017}, environmental monitoring \citep{Capolupo2015}, utility inspection \citep{Day2017, Gomez2017} and traffic management \citep{Ahmadi2017, 2017, Salvo2017, Liu2013}. Many drones are commercially available, but can also be made from individual components and open source software \citep{Sharma2016a}.  Effective drone operations has four main components:
+
+\begin{enumerate}
+\item Aircraft. The aircraft may be fixed wing capable of straight flight only, or multiple rotors (MRs) that allow the aircraft to hover and rotate in flight. A fixed wing aircraft tends to be larger but have higher endurance than rotary wing aircraft. MR drones such as quadcopters (four rotors) are the most popular form of drones. The aircraft includes flight controls, energy storage (usually a lithium battery), communication link with the ground station, navigational systems (typically a global positioning satellite (GPS) sensor), and a sensor suite. The suite usually consists of a camera and stabilization gimbal that allows steady shots while in flight. Other sensors may include infrared sensors, environmental sensors, or multiple cameras. Performance specifications for a DJI Phantom 3 Professional is shown in Table \ref{tb:p3p-specs}. An MR drone in flight is shown in Figure \ref{fig:p3p}.
+
+\item Ground station. The ground station provides commands to the drone. While some software allows mission planning and semi-autonomous operations, the ground station is the link between the pilot and the drone, providing visual, position, flight status and telemetry data needed to maintain control of the aircraft. Links to the aircraft are usually through wifi with internet protocol, limiting the flight range to line of sight (approximately 5 km maximum). For longer ranges, more advanced communication protocols (and transceivers) are needed. These are normally reserved for fixed wing drones.
+
+\item Pilot. The remote pilot in command has ultimate control and responsibility for flight operations, just like in a manned aircraft. He (or she) is responsible for the flight worthiness of the aircraft, safety of the mission, coordination with local authorities for overflight approvals, and mission planning. In most countries, approval from local authorities is required prior to a mission taking place in a public area. Pilots often have to be licensed by aviation agencies, although some countries exclude researchers from this requirement \citep{UAVCoach2017}.
+
+\item Post-Processing. Once data has been collected by the drone, it must be processed to be useful. The data collected by the aircraft sensor suite will also include embedded metadata such as timestamps, geolocation, sensor capture azimuth, and even sensor data. This metadata, combined with the captured imagery, can be used by post-processing analysis to make different 3D models that provide accurate measurements \citep{Sona2014}. 
+
+\end{enumerate}
+
+\begin{table}[H]
+\centering
+\caption{DJI Phantom 3 Professional specifications (DJI, 2017).}
+\label{tb:p3p-specs}
+\begin{tabular}{@{}ll@{}}
+\hline
+\textbf{Aircraft} &  \\ \hline
+Gross flying weight & 1280 g \\
+Diagonal size & 350 mm \\
+Hover accuracy & Vertical: +/- 0.1 m \\
+ & Horizontal: +/- 1.5m \\
+Max Ceiling & 120 m AGL \\
+Operating temperature & 0 - 40 deg C \\
+Max flying time (100\% charge) & 26 minutes \\ \hline
+\textbf{Camera} &  \\ \hline
+Sensor & 1/2.3" CMOS \\
+Lens & FOV 94deg 20mm f/2.8 focus at inf. \\
+ISO Range & 100-1600 \\
+Max Image Size & 4000x3000 \\ \hline
+\end{tabular}
+\end{table}
+
+%
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth,keepaspectratio]{images/p3p.png}  %assumes jpg extension
+\caption{DJI Phantom 3 Professional UAS in flight.}
+\label{fig:p3p}
+\end{figure}
+%
+Drones offer a significant improvement to conventional traffic data collection systems such as ITSs and human traffic counts in that they can be deployed in many areas and capture data from different angles for optimized surveillance. Traffic cameras require secure access and a stable mount, and power access. Human counts need a safe observation location that is usually away from the traffic area or offers limited views. Capturing traffic data with a drone, either for real-time or post-mission analysis, allows flexible access to researchers \citep{Westoby2012}. 
+
+Draw-backs to using drones includes their limited endurance, especially in commercially available drones that use a battery pack and have a typical flight time of 20-25 minutes. This translates to a realistic data collection period of 10-15 minutes, especially if there is a strong wind that the aircraft must overcome in order to return to it's recovery point. Additionally, drones are limited by weather conditions and nearby obstructions. Flying is not recommended during precipitation and low visibility, or when winds are in excess of 22 km/h. Drones are also rated for ambient temperatures of 40 degrees Celsius as well \citep{DJI2017}.
+
+Previous researchers using drones for traffic related subjects focused on aerial surveillance as a way to augment ITS cameras \citep{Liu2013, Barmpounakis2016}. Angel et al. (2002) were some of the first researchers to use a drone to capture traffic densities and turn counts by using recorded video \citep{Angel2002}. More recently, Salvo et al. used drones to measure the headway of vehicles on city streets and roundabouts in Palermo using streaming video and a GPS-equipped probe vehicle that provided a reference speed \citep{Salvo2014, Salvo2017}. Ahmadhi et al (2017) used a drone to measure traffic flow rates from different platoons stacked in various gap distances. By using a thermodynamic analogy, they showed that gap spacing negatively impacted flow rates once the signal changed \citep{Ahmadi2017}.
+
+A simple method currently available to evaluate SI stacking is to use Structure from Motion (SfM) methods in photogrammetry. SfM uses digital elevation models (DEMs) created from point clouds within the photogrammetric model. DEMs are generated from multiple images of the same area at different angles using multi-view stereo (MVS) algorithms \citep{James2017}. Images taken by the drone have geolocation and time stamps embedded in the jpeg file that are orthorectified based on the camera parameters and stitched together to form an orthomosaic image \citep{Westoby2012}.
+
+Take-offs and measurements can then be made on the DEM as well as providing a 3D model of the scene. This requires the traffic to be stationary during the image capture phase - making this technique ideal to quantify traffic stopped at an intersection.
+
+\section{Theoretical Background}
+
+Using Ahmadi's notations \citep{Ahmadi2017}, the amount of vehicles on a unit road length depends on the length of the vehicle, $l$ in meters and thestacking gap a driver keeps from the car in front, $\delta_{s}$.  The recommended moving $\delta_{s}$ gap is based on a spacing, $\Delta_{t}$, of 2 seconds behind the lead vehicle, relative to the vehicle's speed, $s$ \citep{NYDMV2015, ukdot2017}.  For vehicles stacking at an SI and $s=0$ , the spacing is based on the driver's behavior with only informal guidance available such as leaving space for a pedestrian or able to see the tires of the front car. Results from studies show that closing the stacking gap, $\delta_{0}$ , makes no difference in regards to improving vehicle flow rate, but does increase risks for rear end collisions, thereby blocking the lane and indirectly reducing overall flow \citep{Ahmadhi2017}. The total road space for a vehicle stacking at an intersection, $x_{s}$, is given as
+
+\begin{equation}
+\label{eq:roadspace}
+x_{s}= l_{s} +\delta_{s}
+\end{equation}
+
+\noindent
+with $\delta_{s}$ is the stationary stacking  headway at stops and intersection for an individual vehicle and $l_{s}$ is the vehicle length as shown in Fig \ref{fig1:roadspace}.
+
+\begin{figure}[H]
+\includegraphics[width=\textwidth,keepaspectratio]{images/vdense1.png} 
+\caption{Required road space for a vehicle stacking at an intersection.}
+\label{fig1:roadspace}
+\end{figure}
+%
+ The effective vehicle space, $x_{s}$, used by a 5 m long SUV will vary as shown in Fig \ref{fig3:SUVspace} if $\delta_{s}$ is assumed to be a Triangle distribution ranging from 0.5m to 4m.  If $\delta_{s} = 2.2m$ , the most likely effective vehicle space, $x_{s}$,  is  7.2m.
+%
+\begin{figure}[H]
+\includegraphics[width=\linewidth,keepaspectratio]{images/vdense3.png} 
+\caption{Possible SUV road spacing when idling.}
+\label{fig3:SUVspace}
+\end{figure}
+%
+
+The total number of vehicles, $n$, on stacked at a 1 km of road segment can be estimated by summing the number of individual vehicle lengths, $l_{s}$, and individual $\delta_{s}$ as shown:
+% 
+\begin{equation}
+\label{eq1:roadspace}
+n = \sum_{i}\left ({(l_{s})_{i} +(\delta_{s})_{i}} \right )\leq 1,000m 
+\end{equation}
+%
+
+Both $\delta_{s}$ and $l_{s}$ are independent variables subject to a wide range of values.  A vehicle's length may average from 1.8 m for a sedan, and up to 12 m for a heavy goods vehicles (HGVs) with a trailer. The $\delta_{s}$ gap varies with each driver and is assumed to be independent of the vehicle type. This is the first research that aims to model the stacking gap between vehicles at SIs.
+
+\subsubsection{Estimating fleet composition.}
+Specific road use is important when estimating the types of vehicles in a sample population of vehicles.  The distribution of vehicle types in a residential areas is assumed to be different than in an industrial area or highway. More lorries and HGVs would be expected to be seen during early morning hours as compared to SUVs and sedans during rush hours. Vehicle classes were selected to represent existing traffic based on observations in Kuwait, as shown in Table \ref{tb1:vehicletypes}. The frequency shown is from total registered vehicles in Kuwait in 2014 provided by the Ministry of Interior. Pick-ups, minivans, and vans were grouped with SUVs. HGVs were grouped with large buses. The number and type of vehicles can be expanded to provide better classification, such as make, model, engine size, weight, fuel types, and age.
+
+\begin{table}[H]
+\centering
+\caption{Vehicle classes.}
+\label{tb1:vehicletypes}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}ccccccccc@{}}
+\toprule
+\textbf{Vehicle} & \textbf{Vehicle} & \textbf{} & \textbf{} & \textbf{} & \textbf{Bumper to bumper} & \textbf{Gross vehicle} & \textbf{} & \textbf{2014 MOI Frequency} \\ 
+\textbf{Class} & \textbf{Type} & \textbf{Company} & \textbf{Model} & \textbf{Year} & \textbf{length (m)} & \textbf{mass (kg)} & \textbf{Fuel type} & \textbf{(f)} \\ \midrule
+1 & Sedan & Honda & Civic LX & 2013 & 1.79 & 1,650 & Petrol & 55\% \\
+2 & SUV & Toyota & Prado VX & 2013 & 4.95 & 2,990 & Petrol & 33\% \\
+3 & Bus, Midsize & Toyota & Coaster & 2013 & 6.25 & 5,180 & Diesel & 7\%  \\
+4 & Bus, Large & Tata & Starbus 54 & 2013 & 9.71 & 14,860 & Diesel & 5\%  \\ \bottomrule
+\end{tabular}
+} %end resize
+\end{table}
+
+To collect actual fleet composition data, vehicle counts at intersections were made using imagery captured during UAS flights. To test the statistical significance of different fleet compositions and $\delta_{s}$ of vehicles against different locations and times, the following null and alternative hypothesizes, $H_{o}$ and $H_{a}$ respectively, were defined in Table \ref{tab:vehhyp} where $\bar{x}$ is the sample mean and $sd$ is the sample standard deviation. 
+%
+\begin{table}[H]
+\centering
+\caption{Hypothesis definitions for fleet composition and $\delta_{s}$ testing.}
+\label{tab:vehhyp}
+\begin{tabular}{@{}cc@{}}
+\toprule
+\multicolumn{2}{c}{\textbf{Fleet composition hypothesis}} \\ \midrule
+$H_{o}$ & $p_{1} - p_{2} = 0$ \\
+$H_{a}$ & $p_{1} - p_{2} \ne 0$\\ \midrule
+\multicolumn{2}{c}{\textbf{$\delta_{s}$ hypothesis}} \\ \midrule
+$H_{o}$ & $\bar{x}_{1} - \bar{x}_{2} = 0$, $sd_{1} - sd_{2} = 0$ \\
+$H_{a}$ & $\bar{x}_{1} - \bar{x}_{2} \ne 0$, $sd_{1} - sd_{2} \ne 0$ \\ \bottomrule
+\end{tabular}
+\end{table}
+%
+The two proportion z-test can be used to compare the statistical significance between vehicle type probabilities \citep{Presnell2008}. The Z statistic is calculated using the probabilities of both groups and their associated degrees of freedom as given by
+% 
+\begin{equation}
+\label{eq:2zteststat}
+Z_{statistic} = \frac{p_{1}-p_{2}}{\sqrt{p_{tot}(1-p_{tot})\left ( \frac{1}{n_{1}}+\frac{1}{n_{2}} \right )}}
+\end{equation}
+%
+\noindent
+where $p_{1}$ and $p_{2}$ are the probabilities of a vehicle class at different locations/times, $n_{1}$ and $n_{2}$ are the degrees of freedom, and $p_{tot}$ is the composite probability from the combined runs given by
+% 
+\begin{equation}
+\label{eq:2ztesttot}
+p_{tot}=\frac{n_{1}p_{1} + n_{2}p_{2}}{n_{1}+n_{2}}
+\end{equation}
+%
+At the 95\% confidence level, the critical Z score ($Z_{critical}$ for a two-tail test is 1.96. If the calculated $Z_{critical} < Z_score$ then the null hypothesis is not rejected. 
+
+Once the frequency of vehicles types within the local fleet is estimated, a Monte Carlo Analysis (MCA) can be used to estimate the most likely range of vehicle types and numbers on a road segment. Vehicle spaces in the road segment were assigned based on a maximum number of 217 vehicles possible on a 1 km road segment at an SI.  This maximum value assumes that only sedans are on the road with a vehicle length of 1.8 m and a $\delta_{0}$ = 2.8 m .  During modeling however, the most vehicles in the same stretch of road never exceeded 170.  Reasonable $\delta_{s}$ values were initially assumed to range from 0.7 m to 5.6 m. An initial distribution of $\delta_{s}$ was assumed to be a continuous triangle distribution..
+ 
+Each vehicle length was assigned its own probability distribution using a pert distribution based on its class and manufacturer data.  If no data was available, length variation was assumed to be $\pm5\%$. A vehicle class was randomly selected from the different classes of Table \ref{tb1:vehicletypes} for each space.  The vehicle length was then selected based on the class of vehicle.  The$\delta_{s}$ was added to the vehicle length by randomly selecting a time spacing and multiplying it by the average speed to get the safe distance. In the case of speeds less than 5 km/h and at rest, 5 km/h was used.  
+
+If the cumulative length was $<$ 1,000 m, one-hot encoding was used to identify the class for later aggregation and grouping.  Vehicle classes at the end of the list that exceeded the 1 km length were assigned a zero and not counted.  Table \ref{tb3:selection} shows a portion of an iteration at 5 km/h. 
+
+\begin{table}[H]
+\centering
+\caption[Vehicle density sample]{Sample of an iteration showing vehicle class and road space selection for speed = 5 km/h.}
+\label{tb3:selection}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}cccccccc@{}}
+\toprule
+\textbf{Vehicle space} & \textbf{Class} & \textbf{Type} & \textbf{Road Space (m)} & \textbf{Sedan} & \textbf{SUV} & \textbf{Bus, Medium} & \textbf{Bus, Large} \\ \midrule
+Vehicle 1 & 1 & Sedan & 4.7 & 1 & 0 & 0 & 0 \\
+Vehicle 2 & 2 & SUV & 6 & 0 & 1 & 0 & 0 \\
+Vehicle 3 & 1 & Sedan & 6 & 1 & 0 & 0 & 0 \\
+Vehicle 4 & 3 & Bus, Medium & 10.5 & 0 & 0 & 1 & 0 \\
+Vehicle 5 & 1 & Sedan & 6.6 & 1 & 0 & 0 & 0 \\
+Vehicle 6 & 2 & SUV & 6.4 & 0 & 1 & 0 & 0 \\
+Vehicle 7 & 1 & Sedan & 6.1 & 1 & 0 & 0 & 0 \\
+Vehicle 8 & 1 & Sedan & 4.9 & 1 & 0 & 0 & 0 \\ \bottomrule
+\end{tabular}
+} %end resizebox
+\end{table}
+
+
+\section{Methodology}
+
+In order to measure actual $\delta_{s}$ at intersections and quantify fleet compositions operating at specific locations and times, imagery acquired by a UAS was converted into a DEM and 3D model. A commercial, multi-rotor UAS (DJI Phantom 3 Professional) was used to acquire the imagery, which was processed using Pix4Dmapper Pro ver 4.0.25 (\url{https://pix4d.com}).
+
+The UAS was flown at 40m above ground level (AGL) in order to avoid obstacles such as streetlights and trees. Intersections were chosen that represented high traffic densities and long signal cycles in order to capture the scene from multiple angles. No direct overflight of vehicles took place due to safety concerns and a representative from the Kuwait Ministry of Interior was present during all missions. As a result, only oblique imagery was collected. 
+
+The Pix4D software generated the 3D DEM using SfM photogrammetry. Each point used multiple images as shown in Figure \ref{fig:pix4Drays}. In this case, 12 images contribute to the generation of the individual point. The blue spheres at the top of the figure represent the initial camera position and the green sphere represents the optimized position after accounting for GPS location error and camera lens aberration. The camera used in the Phantom 3 Professional has relatively low distortion, therefore requiring minimal orthorectification.
+%
+\begin{figure}[H]
+\includegraphics[width=\linewidth,keepaspectratio]{images/pix4Drays.png} 
+\caption{Generation of point cloud in DEM using oblique imagery.}
+\label{fig:pix4Drays}
+\end{figure}
+%
+
+Distances between vehicle were extracted by measuring polylines between vehicles as shown in Figure \ref{fig:pix4Dgaps}.
+%
+\begin{figure}[H]
+\includegraphics[width=\linewidth,keepaspectratio]{images/pix4dgaps.png} 
+\caption{Measuring $\delta_{s}$ using polylines in a DEM.}
+\label{fig:pix4Dgaps}
+\end{figure}
+%
+Measurements are referenced to World Geodetic System (WGS) 84 coordinates (latitude/longitude) with the distance between individual points computed within the program using the Law of Cosines for spherical trigonometry \citep{Sinnott1984}
+%
+\begin{equation}
+\label{eq:distTrig}
+dist = R * cos^{-1}(sin(Lat_{a})sin(Lat_{b}) + cos(Lat_{a})cos(Lat_{b})cos(\lambda))
+\end{equation}
+
+\noindent
+where $R$ is the WGS 84 radius of the Earth at the equator given as 637,8137m, $Lat_{a}$ and $Lat_{b}$ are the latitudes of points a and b, respectively, in radians, and $\lambda$ is the difference of longitudes for points a and b, in radians.  Both Pix4D and ESRI's ArcGIS use this formula to compute 2D distances between coordinates. This is an unreliable method as the inverse cosine produces rounding errors, especially for coordinate differences less than 1 minute of arc (0.01667 degrees - or about 31m) \citep{Sinnott1984}. A more precise formula uses the Haversine method given as 
+
+\begin{equation}
+\label{eq:distHaversine}
+d = 2Rsin^{-1}\left (\sqrt{ sin^{2}\left ( \frac{Lat_{a}-Lat_{b}}{2} \right ) + cos(Long_{a})cos(Long_{b})sin^{2} \left ( \frac{Long_{a}-Long_{b}}{2} \right ) } \right )
+\end{equation}
+
+To determine if the software was accurately capturing the distances, a test pattern was prepared using different shaped items that could be measured safely on the ground as shown in Figure \ref{fig:uascalibration}. Imagery was captured at different altitudes (30m, 40m and 50m) to represent operational altitudes that would be flown during actual data collection missions.
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth,keepaspectratio]{images/uascalibrate.png} 
+\caption{Calibration items for photogrammetry modeling verification.}
+\label{fig:uascalibration}
+\end{figure}
+
+The results of the distance measurements from models generated at different altitudes is shown in Table \ref{tab:uascalibrate}. The results show that even at a high altitude of operation, the MAE was only 4.1cm, or for the smallest measurement (Item 5), a possible error of 8.5\%. This was considered to be a worst case error. As a result of this test, no correction to the distance measured using the Pix4D software was applied.
+
+%
+\begin{table}[H]
+\centering
+\caption[Comparison of distance measurement at different altitudes]{Comparison of distance measurement at different altitudes (all units in cm)}
+\label{tab:uascalibrate}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+\textbf{Item} & \textbf{Actual} & \textbf{30m} & \textbf{40m} & \textbf{50m} \\ \midrule
+1 & 100 & 100 & 102 & 100 \\
+2 & 140 & 137 & 142 & 137 \\
+3 & 120 & 118 & 128 & 130 \\
+4 & 125 & 123 & 124 & 126 \\
+5 & 48 & 43 & 52 & 49 \\
+6 & 162 & 155 & 164 & 167 \\
+7 & 69 & 68 & 73 & 78 \\
+MAE &  & 2.9 & 3.3 & 4.1 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{Results}
+\subsection{UAS collected traffic data}
+Data was collected at the west-bound intersection on the 7th Ring and 40 Highway known for heavy congestion during the periods of 0700 and 0800 on Wednesday, 20 December 2017 and the south-bound intersection of the 55 Airport Road and 4th Ring on Thursday, 4 January 2018 between 1300 and 1400 hrs as shown in \ref{fig:flights}. The flights were processed using the Pix4Dmapper Pro software with a summary of  each mission shown in Table \ref{tb:flightdata}. A total of two flights were processed on 20 Dec mission and three flights on the 4 Jan mission. All flights were flown at 40m AGL.
+
+\begin{figure}[H]
+\includegraphics[width=\linewidth,keepaspectratio]{images/flights.png} 
+\caption[Flight locations]{Flight locations in north and south Kuwait.}
+\label{fig:flights}
+\end{figure}
+
+
+\begin{table}[H]
+\centering
+\caption{Summary of data collection flights and processed imagery}
+\label{tb:flightdata}
+\begin{tabular}{@{}cccc@{}}
+\toprule
+\textbf{Flight} & \textbf{Flight start time} & \textbf{\# of pictures} & \textbf{\# of cloud points} \\ \midrule
+20Dec17-1 & 0704 & 39 & 3,819,568 \\
+20Dec17-2 & 0725 & 68 & 6,610,918 \\
+4Jan18-1 & 1317 & 40 & 3,037,660 \\
+4Jan18-2 & 1329 & 38 & 3,313,626 \\
+4Jan18-3 & 1345 & 50 & 3,840,476 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection{Classifying vehicles types from UAS data}
+Vehicles such as pick-ups, mini-vans, and vans were classified as SUVs while diesel fueled lorries were classified as large buses and gasoline lorries as medium buses. HGVs included all vehicles with a tractor cab and attached trailer. The different vehicles observed on each flight is shown in Table \ref{tab:fleetcount}.
+
+\begin{table}[H]
+\centering
+\caption{Fleet composition from each flight.}
+\label{tab:fleetcount}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}cccccccccc@{}}
+\toprule
+\multicolumn{4}{c}{\textbf{20 Dec 2017 counts}} & \textbf{} & \multicolumn{5}{c}{\textbf{4 Jan 2018 counts}} \\ 
+Flight & 20Dec17-1 & 20Dec17-2 & Total &  & Flight & 4Jan18-1 & 4Jan18-2 & 4Jan18-3 & Total \\ \midrule
+Car & 45 & 75 & 120 &  & Car & 60 & 56 & 49 & 165 \\
+SUV & 55 & 93 & 148 &  & SUV & 40 & 61 & 59 & 160 \\
+Bus, Med & 2 & 1 & 3 &  & Bus, med & 0 & 0 & 2 & 2 \\
+Bus, Large & 9 & 5 & 14 &  & Bus, Large & 5 & 5 & 6 & 16 \\
+ & 111 & 174 & 285 &  & Subtotal & 105 & 122 & 116 & 343 \\ \midrule
+\multicolumn{4}{c}{\textbf{20 Dec 2017 percentages}} & \textbf{} & \multicolumn{5}{c}{\textbf{4 Jan 2018 percentages}} \\
+Flight & 20Dec17-1 & 20Dec17-2 & Total &  & Flight & 4Jan18-1 & 4Jan18-2 & 4Jan18-3 & Total \\ \midrule
+Car & 40.5\% & 43.1\% & 42.1\% &  & Car & 57.1\% & 45.9\% & 42.2\% & 48.1\% \\
+SUV & 49.5\% & 53.4\% & 51.9\% &  & SUV & 38.1\% & 50.0\% & 50.9\% & 46.6\% \\
+Bus, Med & 1.8\% & 0.6\% & 1.1\% &  & Bus, med & 0.0\% & 0.0\% & 1.7\% & 0.6\% \\
+Bus, Large & 8.1\% & 2.9\% & 4.9\% &  & Bus, Large & 4.8\% & 4.1\% & 5.2\% & 4.7\% \\ \bottomrule
+\end{tabular}
+} %end resize
+\end{table}
+
+To test the null hypothesis, $H_{o}$ established in Table \ref{tab:vehhyp} for fleet compositions whereby the composite probabilities of each vehicle class from each flight group was $p_{1} - p_{2} = 0$, the Z statistic was calculated according to Equation \ref{eq:2zteststat} and compared to the two-tailed critical value for 95\% confidence of 1.96. If the Z statistic was less than the critical value, the null hypothesis could not be rejected and the probabilities of each vehicle class could be considered equivalent for those flight groups. Table \ref{tab:fleettest} showed that all classes failed to reject the null hypothesis, strengthening the assumption that fleet composition is similar at most intersections and at all times of congestion.
+
+\begin{table}[H]
+\centering
+\caption{Statistical significance test results for fleet composition between sites.}
+\label{tab:fleettest}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+\textbf{} & \textbf{Car} & \textbf{SUV} & \textbf{Bus, Med} & \textbf{Bus, Large} \\ \midrule
+Z-statistic & 1.004 & 0.927 & 0.058 & 0.032 \\
+Z-statistic \textless 1.96? & TRUE & TRUE & TRUE & TRUE \\ \bottomrule
+\end{tabular}
+\end{table}
+
+The results of the pooled data for each vehicle type in the fleet composition is shown in Table \ref{tab:pooledfleet}.
+
+\begin{table}[H]
+\centering
+\caption{Fleet composition based on pooled observation data.}
+\label{tab:pooledfleet}
+\begin{tabular}{cccc}
+\textbf{Car} & \textbf{SUV} & \textbf{Bus, Med} & \textbf{Bus, Large} \\
+45.4\% & 49.0\% & 0.8\% & 4.8\%
+\end{tabular}
+\end{table}
+
+\subsection{Evaluating traffic density from UAS data}
+
+Measurements of $\delta_{0}$ were taken from models processed using Pix4D DesktopPro software with  imagery collected from the flights in Table \ref{tb:flightdata}.  Results from each lane were assumed to be part of the same population and pooled as one data set. The first test of similarity to confirm the null hypothesis established in Table \ref{tab:vehhyp} for $\delta_{0}$'s of equal means and variances between samples, required flights from the same day show equal means and variances. Accepting this null hypothesis also implied that the underlying distribution of the data was Normal.  Descriptive statistics from each flight were calculated and shown in Table \ref{tab:normaltest} along with results from one-way ANOVA tests for each flight groups (20Dec2017 and 4Jan2018). Skewness values for normally distributed data is close to zero, while kurtosis values should be 3 \citep{NIST2013}. The one-way ANOVA results for the 20Dec2017 flights shows a p-value greater than the significance level of p=0.05, allowing the Null hypothesis to not be rejected and assuming the means of both flights are not statistically different. However, the p-Value for the 4Jan2018 flights is less than the significance level, requiring the Null to be rejected and assuming that the means for each flight vary significantly.
+
+\begin{table}[H]
+\centering
+\caption{Statistic and One-way ANOVA tests for flights.}
+\label{tab:normaltest}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+\textbf{Statistic} & \textbf{20Dec17-1} & \textbf{20Dec17-2} & \textbf{4Jan18-1} & \textbf{4Jan18-2} & \multicolumn{1}{l}{\textbf{4Jan18-3}} \\ \midrule
+Mean & 2.227 & 2.0546 & 2.0230 & 2.393 & 2.2201 \\
+Std. Dev. & 1.132 & 0.9297 & 0.8507 & 1.272 & 0.9348 \\
+Skewness & 1.9369 & 1.6885 & 1.3285 & 2.0740 & 1.1618 \\
+Kurtosis & 9.8617 & 6.8944 & 5.0260 & 9.7338 & 4.5501 \\
+Count & 108 & 171 & 102 & 119 & 113 \\
+ &  &  &  &  & \multicolumn{1}{l}{} \\ \midrule
+\textbf{20Dec17 Flights} & \textbf{Sum of squares} & \textbf{Deg of freedom} & \textbf{Mean squares} & \textbf{F-ratio} & \multicolumn{1}{l}{\textbf{p-value}} \\ \midrule
+Between Variation & 1.969 & 1 & 1.969 & 1.920 & 0.167 \\
+Within Variation & 284.125 & 277 & 1.026 &  &  \\
+Total Variation & 286.095 & 278 &  &  &  \\
+\multicolumn{1}{l}{} & \multicolumn{1}{l}{} & \multicolumn{1}{l}{} & \multicolumn{1}{l}{} & \multicolumn{1}{l}{} & \multicolumn{1}{l}{} \\ \midrule
+\multicolumn{1}{l}{\textbf{4Jan18 Flights}} & \multicolumn{1}{l}{\textbf{Sum of squares}} & \multicolumn{1}{l}{\textbf{Deg of freedom}} & \multicolumn{1}{l}{\textbf{Mean squares}} & \multicolumn{1}{l}{\textbf{F-ratio}} & \multicolumn{1}{l}{\textbf{p-value}} \\ \midrule
+Between Variation & 7.513 & 1 & 7.513 & 6.231 & 0.013 \\
+Within Variation & 264.073 & 219 & 1.206 &  &  \\
+Total Variation & 271.586 & 220 &  &  &  \\ \bottomrule
+\end{tabular}
+} %end resize
+\end{table}
+
+By transforming the $\delta_{s}$ data using the common logarithmic function (base 10), the data shows more Normal features as well as allowing the Null hypothesis to stand for both groups as shown in the skewness and kurtosis statistics and one-way ANOVA results in Table \ref{tab:logtest}. Flight 20Dec17-1 has a high kurtosis value, despite the transformation.
+
+\begin{table}[H]
+\centering
+\caption{Statistic and one-way ANOVA tests for transformed flights.}
+\label{tab:logtest}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+\textbf{Statistic} & \textbf{20Dec17-1} & \textbf{20Dec17-2} & \textbf{4Jan18-1} & \textbf{4Jan18-2} & \textbf{4Jan18-3} \\ \midrule
+Mean & 0.297 & 0.275 & 0.272 & 0.331 & 0.311 \\
+Variance & 0.048 & 0.032 & 0.028 & 0.040 & 0.031 \\
+Std. Dev. & 0.220 & 0.178 & 0.168 & 0.200 & 0.177 \\
+Skewness & -0.737 & 0.229 & 0.323 & 0.415 & -0.003 \\
+Kurtosis & 6.044 & 3.364 & 2.796 & 3.157 & 2.983 \\
+Count & 108 & 171 & 102 & 119 & 113 \\
+ &  &  &  &  &  \\ \midrule
+\textbf{20Dec17 Flights} & \textbf{Sum of squares} & \textbf{Deg of freedom} & \textbf{Mean squares} & \textbf{F-ratio} & \textbf{p-value} \\ \midrule
+Between Variation & 0.031 & 1 & 0.031 & 0.800 & 0.372 \\
+Within Variation & 10.563 & 277 & 0.038 &  &  \\
+Total Variation & 10.594 & 278 &  &  &  \\
+ &  &  &  &  &  \\ \midrule
+\textbf{4Jan18 Flights} & \textbf{Sum of squares} & \textbf{Deg of freedom} & \textbf{Mean squares} & \textbf{F-ratio} & \textbf{p-value} \\ \midrule
+Between Variation & 0.189 & 2 & 0.095 & 2.830 & 0.060 \\
+Within Variation & 11.057 & 331 & 0.033 &  &  \\
+Total Variation & 11.246 & 333 &  &  &  \\ \bottomrule
+\end{tabular}
+} % end resize
+\end{table}
+
+In both groups, the p-values are greater than the significance value of p = 0.05 and thus the means within each group can be assumed to be not significantly different. The individual flights within each group can be pooled if transformed in order to compare group means. The results of a one-way ANOVA test between combined flight groups in Table \ref{tab:grouptest} shows that the p-value is greater than the significance value, allowing the Null to stand and providing stronger evidence that the means for different $\delta_{0}$ locations and time are equal if transformed.
+%
+\begin{table}[H]
+\centering
+\caption{Statistics and one-way ANOVA test for transformed groups.}
+\label{tab:grouptest}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}cccccc@{}}
+\toprule
+\textbf{Statistic} & \textbf{20-Dec-17} & \textbf{4-Jan-18} &  &  &  \\ \midrule
+Mean & 0.284 & 0.306 &  &  &  \\
+Variance & 0.038 & 0.034 &  &  &  \\
+Std. Dev. & 0.195 & 0.184 &  &  &  \\
+Skewness & -0.261 & 0.309 &  &  &  \\
+Kurtosis & 4.957 & 3.100 &  &  &  \\
+Count & 279 & 334 &  &  &  \\
+ &  &  &  &  &  \\ \midrule
+\textbf{one-way ANOVA table} & \textbf{Sum of squares} & \textbf{Deg of freedom} & \textbf{Mean squares} & \textbf{F-ratio} & \textbf{p-value} \\ \midrule
+Between Variation & 0.078 & 1 & 0.078 & 2.180 & 0.140 \\
+Within Variation & 21.840 & 611 & 0.036 &  &  \\
+Total Variation & 21.917 & 612 &  &  &  \\ \bottomrule
+\end{tabular}
+} %end resize
+\end{table}
+
+The $\delta_{0}$ variable in an MCA model can be represented by taking the exponent of a Normal distribution with the parameters of the mean, $\mu$, and standard deviation, $\sigma$, given in Table \ref{tab:gapnormal}.
+
+\begin{table}[H]
+\centering
+\caption{Parameters for $\delta_{0}$ transformed distribution}
+\label{tab:gapnormal}
+\begin{tabular}{@{}ccc@{}}
+\toprule
+ \textbf{$\mu$} & \textbf{$\sigma$} \\ \midrule
+ 0.2958 & 0.1892 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+A distribution of the transformed pooled groups is shown in Figure \ref{fig:ivgloggroup}a along with a Normal distribution, $N(\mu,\sigma)$, fitted from the transformed data. In Figure \ref{fig:ivgloggroup}b, the distribution from Figure \ref{fig:ivgloggroup}a is inverted back to real space using the equation
+
+\begin{equation}
+\label{inverse-10}
+X = 10^{N(\mu,\sigma)}
+\end{equation}
+
+along with an MCA using 5,000 iterations. The resulting fitted distribution is lognormal with a mean of 2.2 m and variance of 1.0 m. 
+ 
+\begin{figure}[H]
+\includegraphics[width=\linewidth,keepaspectratio]{images/ivg-group-log.png} 
+\caption[Distributions of combined groups of $\delta_{s}$ data.]{Distributions of combined groups of $\delta_{s}$ data showing a. transformed data with fitted Normal distribution and b. MCA re-transformed data using the parameters from Table \ref{tab:gapnormal}.}
+\label{fig:ivgloggroup}
+\end{figure}
+
+The fitted lognormal distribution provides a good fit as shown in the Q-Q plot in Figure \ref{fig:qlognormal}, especially with  $\delta_{s}$ values less than 5m (representing approximately 97.5\% of the possible results). Additionally, the MAE between the MCA generated data and calculated  results is 0.0126m, compared to the 0.041m MAE measurement error. The composite error is $\pm 0.054$m.
+
+\begin{figure}[H]
+%\includegraphics[width=\linewidth,keepaspectratio]{images/qlognormal.png} 
+\includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{images/qlognormal.png} 
+\caption{Q-Q plot of Figure \ref{fig:ivgloggroup}b.}
+\label{fig:qlognormal}
+\end{figure}
+
+\subsection{Evaluating vehicle spacing by type}
+To test the assumption that $\delta_{s}$ did not vary with vehicle types, results from vehicle types were compared to the pooled data set using a two-tailed t-test with unequal variance. Table \ref{tab:vehtest} shows the breakdown of different types as well as frequency of observations on each lane, mean of each lane, transformed (log) mean of each lane, and the resulting t-test result for all observations in the vehicle type class. The largest 2 classes, cars and SUVs had statistically significant variation to the pooled data at the 95\% level ($p>0.05$), but would have passed at the 99\% level ($p>0.01$). 
+
+\begin{table}[H]
+\centering
+\caption{Results of significance testing of individual vehicle types and pooled data.}
+\label{tab:vehtest}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}ccccccc@{}}
+\toprule
+\textbf{Vehicle Type} & \textbf{Lane} & \textbf{Count} & \textbf{Mean} & \textbf{LogMean} & \textbf{p-value} & \textbf{Test} \\ \midrule
+Car & 1 & 87 & 1.87 & 0.53 & 0.022 & FALSE \\
+ & 2 & 102 & 2.10 & 0.65 &  &  \\
+ & 3 & 92 & 2.08 & 0.63 &  &  \\ \midrule
+SUV & 1 & 65 & 2.36 & 0.75 & 0.048 & FALSE \\
+ & 2 & 81 & 2.10 & 0.68 &  &  \\
+ & 3 & 87 & 2.40 & 0.80 &  &  \\ \midrule
+Pick-Up & 1 & 11 & 2.77 & 0.95 & 0.100 & TRUE \\
+ & 2 & 10 & 2.16 & 0.69 &  &  \\
+ & 3 & 13 & 2.79 & 0.81 &  &  \\ \midrule
+Lorry & 1 & 13 & 2.36 & 0.82 & 0.062 & TRUE \\
+ & 2 & 6 & 2.37 & 0.78 &  &  \\
+ & 3 & 1 & 5.67 & 1.74 &  &  \\ \midrule
+MiniVan & 1 & 9 & 2.15 & 0.74 & 0.485 & TRUE \\
+ & 2 & 10 & 1.98 & 0.62 &  &  \\
+ & 3 & 8 & 1.88 & 0.53 &  &  \\ \midrule
+HGV & 1 & 2 & 1.62 & 0.48 & 0.185 & TRUE \\
+ & 2 & 1 & 1.92 & 0.65 &  &  \\ \midrule
+Bus, Med & 1 & 4 & 2.93 & 0.98 & 0.325 & TRUE \\ \midrule
+Bus, Large & 1 & 6 & 1.56 & 0.36 & 0.083 & TRUE \\
+ & 3 & 1 & 1.23 & 0.21 &  &  \\ \midrule
+Van & 2 & 1 & 1.24 & 0.22 & 0.501 & TRUE \\
+ & 3 & 3 & 3.54 & 1.17 &  &  \\ \bottomrule
+\end{tabular}
+}% end resize
+\end{table}
+
+SUVs barely fail the test. Larger vehicles, represented by lorries, vans, buses, and HGVs do not vary significantly, possibly due to professional drivers  with more consistent driving behaviors. Cars and SUVs are more likely to be driven by private owners for commutes and short trips. No effort was made to isolate taxis and other professionally driven vehicles from the car and SUV pool.
+
+Grouping the different types into the 4 groups in Table \ref{tab:smallgroup}, shows that vehicle type is significant for $\delta_{s}$ values at the 95\% level ($p>0.05$), but not at the 99\% level ($p>0.01$).
+
+\begin{table}[H]
+\centering
+\caption{Results of significance testing of grouped vehicle types and pooled data.}
+\label{tab:smallgroup}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+\textbf{Type} & \textbf{Lane} & \textbf{Count} & \textbf{p-value} & \textbf{Result} \\ \midrule
+Car & 1 & 87 & 0.022 & FALSE \\
+ & 2 & 102 &  &  \\
+ & 3 & 92 &  &  \\  \midrule
+SUV & 1 & 85 & 0.031 & FALSE \\
+ & 2 & 102 &  &  \\
+ & 3 & 111 &  &  \\  \midrule
+Bus, Med & 1 & 17 & 0.028 & FALSE \\
+ & 2 & 6 &  &  \\
+ & 3 & 1 &  &  \\  \midrule
+Bus, Large & 1 & 8 & 0.041 & FALSE \\
+ & 2 & 1 &  &  \\
+ & 3 & 1 &  &  \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Monte Carlo Analysis using field data}
+Using the fleet composition and $\delta_{s}$ model parameters developed from the pooled data collected from the UAS flights, a vehicle density model was prepared for MCA. Palisade Software’s @RISK Version 7.5 Industrial Edition (www.palisade.com) was used to provide the Monte Carlo analysis (MCA) using a Latin Hypercube sample generator.  A total of 5,000 iterations were run at 5, 10, 15, and 20 km/h. It was assumed that fleet composition at different speeds will not vary within an observed road segment. The $\delta_{0}$ calculated based on the parameters of Table \ref{tab:gapnormal} can be assumed for speeds $\leq$ 5 km/h. For speeds $>$ 5 km/h, the lognormal distribution is kept and parameters linearly extrapolated by multiplying the mean by factor of the speed relative to 5 km/h.  
+
+The model captures the total number and class of vehicles in one kilometer of road.  Lane changing was not considered. The average (mean) of the total vehicles in one road lane over a 1 km segment at different speeds are summarized in Table \ref{tab:meanvehdensity}.
+
+\begin{table}[H]
+\centering
+\caption{Average estimated total vehicles in a 1 km single lane.}
+\label{tab:meanvehdensity}
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Vehicle Type} & \textbf{Idle} & \textbf{5 km/h} & \textbf{10 km/h} & \textbf{15 km/h} & \textbf{20 km/h} \\ \midrule
+Sedans & 76 & 62 & 52 & 40 & 18 \\
+SUV's & 82 & 67 & 56 & 43 & 20 \\
+Bus, Medium & 1 & 1 & 1 & 1 & 0 \\
+Bus, Large & 8 & 7 & 5 & 4 & 2 \\
+Total & 167 & 137 & 114 & 88 & 40 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+Figure \ref{fig6:estimatedobs} shows the results of all vehicles traveling at an average of 5 km/h.
+ 
+%
+\begin{figure}[H]
+%\includegraphics[width=\textwidth,keepaspectratio]{images/vdense6.png}
+\includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{images/vdense9.png} 
+\caption{Total estimated idling vehicles on a 1,000 m segment.}
+\label{fig6:estimatedobs}
+\end{figure}
+%
+
+Graphing the statistical mean for the total number of vehicles over different average speed yields a linear form as shown in Fig \ref{fig9:estimateavemix}.  Fitting the curve with a trend line provides very high correlation ($R^{2} = .995$) that can approximate the expected value at each speed.  Similar curves (mean of each speed) for each vehicle class were prepared and summarized in Table \ref{tb4:expectedvehicles}.  A curve for medium buses was not included because the expected value at each speed is 1 per km.
+
+%
+\begin{figure}[H]
+%\includegraphics[width=\textwidth,keepaspectratio]{images/vdense9.png} 
+\includegraphics[width=\textwidth,height=\textheight,keepaspectratio]{images/vdense6.png}
+\caption{Total estimated vehicles on 1,000 m segment at average speed (km/h).}
+\label{fig9:estimateavemix}
+\end{figure}
+% 
+
+Table \ref{tb4:expectedvehicles} summarizes the expected number for vehicles by class in a 1,000m segment based on speed, $s$, in km/h.
+%
+\begin{table}[H]
+\centering
+\caption{ Expected numbers of vehicles in 1,000m based on average speed (km/h).}
+\label{tb4:expectedvehicles}
+\begin{tabular}{@{}cc@{}}
+\toprule
+\textbf{Vehicle class} & \textbf{Expected number of vehicles } \\ \midrule
+Total & \# of Vehicles = $Integer(-6.2(s) + 165.6)$ \\
+Sedans & \# of Sedans = $Integer (-2.82(s) + 75.2)$ \\
+SUV's & \# of SUVs = $Integer (-3.04(s) + 81)$ \\
+Bus, medium & \ 1 \\
+Bus, large & \# of large buses = $Integer (-0.3(s) + 8.2)$ \\ \bottomrule
+\end{tabular}
+\end{table}
+%
+The results in Table \ref{tb4:expectedvehicles} are representative only of that section of road with the fleet composition in Table \ref{tab:pooledfleet}.  Different traffic profiles will have different densities and results.  Other factors that could affect the traffic profiles include location of road section, type of road, season, time of day, weather conditions and construction activities. 
+ 
+\section{Conclusions and recommendations}
+Traffic density characterization is a fundamental input to mobile source emission inventory estimation and traffic planning. Establishing fleet composition is usually completed by traffic counts and can be done relatively easily using stationary cameras or human observers. Capturing vehicle spacing is more complex when using a stationary camera without surface references. Our method, using a UAS and photogammetry software to create a 3D model of a signaled interchange, allowed easy fleet composition evaluation as well as measuring $\delta_{s}$. By evaluating different intersections during different high volume traffic periods, we were able to establish that both fleet composition and $\delta_{s}$ distributions did not vary significantly and could be pooled to form a larger sample set. The $\delta_{s}$ datasets required logarithmic transformation to achieve normality and meet statistical testing requirements (p$<$0.05). This research is one of the first papers that addresses the expected stacking gaps between vehicle at SIs.
+
+Our initial results show that traffic density at intersections, and by assumption, congested traffic moving at 5 km/h or less, stacks using a log-normal distribution with a mean of 2.2m and a variance of 1m. Additional missions will be conducted at the sampling points to better characterize traffic composition during different times of day.
+
+Using the spacing model developed for idling traffic at SIs, spacing was linearly increased for different speeds in order to create spacing distributions for an MCA model. The model randomly determined individual vehicles based on the fleet composition and spacing based on the design speed and spacing model. The model then aggregated the filled individual road spaces for a 1 km road segment. This model was not validated with data sets. While creating a 3D model of stopped vehicles is easy to do with a UAS, making a 3D model of vehicles travelling in excess of 5 km/h is more difficult.With moving traffic, the UAS becomes a static camera for instantaneous shots from the same angle that can be compared, similar to traditional traffic cameras, but with more flexibility with regards to location and altitude. Ground control markers and reference points are required to measure distances relative to the drone and the target vehicles. This method will be developed in future work.
+
+\section{Acknowledgements}
+Special thanks to the Kuwait Ministry of Interior and Kuwait Traffic Safety Society.  We also acknowledge partial financial support of Natural Science and Engineering Research Council of Canada (NSERC) and Lakes Environmental.
+ 
+\section{References}
+
+\end{linenumbers}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% end 
+\bibliography{intersectiongaps}{}
+\bibliographystyle{abbrvnat}
+\end{document}
